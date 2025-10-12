@@ -1,8 +1,6 @@
 # models.py
-
 import operator
 from typing import Annotated, List
-
 from langgraph.graph import MessagesState
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
@@ -11,16 +9,13 @@ from typing_extensions import TypedDict
 # Section Model
 # -------------------------------
 
-
 class Section(BaseModel):
     title: str
     content: str
 
-
 # -------------------------------
 # Analyst Models
 # -------------------------------
-
 
 class Analyst(BaseModel):
     affiliation: str = Field(description="Primary affiliation of the analyst.")
@@ -39,26 +34,21 @@ class Analyst(BaseModel):
             f"Description: {self.description}\n"
         )
 
-
 class Perspectives(BaseModel):
     analysts: List[Analyst] = Field(
         description="Comprehensive list of analysts with their roles and affiliations."
     )
 
-
 # -------------------------------
 # Search Query Output Parser
 # -------------------------------
 
-
 class SearchQuery(BaseModel):
     search_query: str = Field(None, description="Search query for retrieval.")
-
 
 # -------------------------------
 # State Classes for Graphs
 # -------------------------------
-
 
 class GenerateAnalystsState(TypedDict):
     topic: str  # Research topic
@@ -66,14 +56,12 @@ class GenerateAnalystsState(TypedDict):
     human_analyst_feedback: str  # Feedback from human
     analysts: List[Analyst]  # List of analysts generated
 
-
 class InterviewState(MessagesState):
     max_num_turns: int  # Max interview turns allowed
     context: Annotated[list, operator.add]  # Retrieved or searched context
     analyst: Analyst  # Analyst conducting interview
     interview: str  # Full interview transcript
     sections: list  # Generated section from interview
-
 
 class ResearchGraphState(TypedDict):
     topic: str  # Research topic
