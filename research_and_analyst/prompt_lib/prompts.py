@@ -48,19 +48,10 @@ Refer to the expert as expert, he doesn't have a name."""
 # Prompt to Generate Search Query from Conversation
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GENERATE_SEARCH_QUERY = """You will be given a conversation between an analyst and an expert. 
-
-Your goal is to generate a well-structured query for use in retrieval and / or web-search related to the conversation.
-
+Your goal is to generate a well-structured query for use in retrieval and / or web-search related to the conversation. 
 First, analyze the full conversation.
-
 Pay particular attention to the final question posed by the analyst.
-
-Convert this final question into a well-structured web search query
-
-conversation: {conversation}
-
-provide output strictly in this format: {format_instructions}"""
-
+Convert this final question into a well-structured web search query"""
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Prompt for Expert to Generate Answers
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
