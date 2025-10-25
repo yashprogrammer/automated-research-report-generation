@@ -375,7 +375,7 @@ if __name__ == "__main__":
         
         graph = reporter.build_graph()
         
-        topic = "How can generative help us to play the cricket?"
+        topic = "Impact of GenAI over the future Jobs?"
         
         thread = {"configurable": {"thread_id": "1"}}
         
