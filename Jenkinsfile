@@ -115,12 +115,27 @@ pipeline {
                       --name $APP_NAME \
                       --resource-group $APP_RESOURCE_GROUP > /dev/null 2>&1; then
                         echo "📝 Updating existing Container App..."
+                        
+                        # Update secrets first
+                        echo "🔑 Updating secrets..."
+                        az containerapp secret set \
+                          --name $APP_NAME \
+                          --resource-group $APP_RESOURCE_GROUP \
+                          --secrets \
+                            openai-api-key=$OPENAI_API_KEY \
+                            google-api-key=$GOOGLE_API_KEY \
+                            groq-api-key=$GROQ_API_KEY \
+                            tavily-api-key=$TAVILY_API_KEY
+                        
+                        # Update container app with new image
                         az containerapp update \
                           --name $APP_NAME \
                           --resource-group $APP_RESOURCE_GROUP \
                           --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:latest
                     else
                         echo "🆕 Creating new Container App..."
+                        
+                        # Step 1: Create the app without secret references
                         az containerapp create \
                           --name $APP_NAME \
                           --resource-group $APP_RESOURCE_GROUP \
@@ -135,14 +150,10 @@ pipeline {
                           --max-replicas 3 \
                           --cpu 1.0 \
                           --memory 2.0Gi \
-                          --env-vars \
-                            OPENAI_API_KEY=secretref:openai-api-key \
-                            GOOGLE_API_KEY=secretref:google-api-key \
-                            GROQ_API_KEY=secretref:groq-api-key \
-                            TAVILY_API_KEY=secretref:tavily-api-key \
-                            LLM_PROVIDER=$LLM_PROVIDER
+                          --env-vars LLM_PROVIDER=$LLM_PROVIDER
                         
-                        # Set secrets
+                        # Step 2: Add secrets
+                        echo "🔑 Adding secrets..."
                         az containerapp secret set \
                           --name $APP_NAME \
                           --resource-group $APP_RESOURCE_GROUP \
@@ -151,6 +162,18 @@ pipeline {
                             google-api-key=$GOOGLE_API_KEY \
                             groq-api-key=$GROQ_API_KEY \
                             tavily-api-key=$TAVILY_API_KEY
+                        
+                        # Step 3: Update env vars to use secret references
+                        echo "🔗 Linking environment variables to secrets..."
+                        az containerapp update \
+                          --name $APP_NAME \
+                          --resource-group $APP_RESOURCE_GROUP \
+                          --set-env-vars \
+                            OPENAI_API_KEY=secretref:openai-api-key \
+                            GOOGLE_API_KEY=secretref:google-api-key \
+                            GROQ_API_KEY=secretref:groq-api-key \
+                            TAVILY_API_KEY=secretref:tavily-api-key \
+                            LLM_PROVIDER=$LLM_PROVIDER
                     fi
                 '''
             }
