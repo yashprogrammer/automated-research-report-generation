@@ -92,17 +92,36 @@ pipeline {
         stage('Verify Docker Image in ACR') {
             steps {
                 echo '🔍 Verifying Docker image exists in ACR...'
-                sh '''
-                    # Check if image exists (no Docker needed)
-                    if az acr repository show --name $ACR_NAME --repository $IMAGE_NAME > /dev/null 2>&1; then
-                        echo "✅ Image found in ACR"
-                        az acr repository show-tags --name $ACR_NAME --repository $IMAGE_NAME --output table
-                    else
-                        echo "❌ Image not found in ACR"
-                        echo "Please run: ./build-and-push-docker-image.sh"
-                        exit 1
-                    fi
-                '''
+                script {
+                    // Get the latest tag from ACR
+                    def imageTag = sh(
+                        script: """
+                            az acr repository show-tags \
+                              --name \$ACR_NAME \
+                              --repository \$IMAGE_NAME \
+                              --orderby time_desc \
+                              --output tsv \
+                              | head -n 1
+                        """,
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (imageTag) {
+                        echo "✅ Found image with tag: ${imageTag}"
+                        env.IMAGE_TAG = imageTag
+                    } else {
+                        error "❌ No images found in ACR. Please run: ./build-and-push-docker-image.sh"
+                    }
+                    
+                    // Show all available tags
+                    sh """
+                        echo "📋 Available tags:"
+                        az acr repository show-tags \
+                          --name \$ACR_NAME \
+                          --repository \$IMAGE_NAME \
+                          --output table
+                    """
+                }
             }
         }
         
@@ -110,6 +129,8 @@ pipeline {
             steps {
                 echo '🚀 Deploying to Azure Container Apps...'
                 sh '''
+                    echo "📦 Using image: ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
+                    
                     # Check if Container App exists
                     if az containerapp show \
                       --name $APP_NAME \
@@ -131,7 +152,7 @@ pipeline {
                         az containerapp update \
                           --name $APP_NAME \
                           --resource-group $APP_RESOURCE_GROUP \
-                          --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:latest
+                          --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}
                     else
                         echo "🆕 Creating new Container App..."
                         
@@ -140,7 +161,7 @@ pipeline {
                           --name $APP_NAME \
                           --resource-group $APP_RESOURCE_GROUP \
                           --environment $CONTAINER_ENV \
-                          --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:latest \
+                          --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG} \
                           --registry-server ${ACR_NAME}.azurecr.io \
                           --registry-username $ACR_USERNAME \
                           --registry-password $ACR_PASSWORD \
