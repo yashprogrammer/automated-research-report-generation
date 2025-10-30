@@ -17,9 +17,9 @@ echo ""
 echo "🔐 Logging in to Azure Container Registry..."
 az acr login --name $APP_ACR_NAME
 
-# Build image
-echo "🔨 Building Docker image..."
-docker build -t ${APP_ACR_NAME}.azurecr.io/${IMAGE_NAME}:${TAG} .
+# Build image for linux/amd64 (required for Azure Container Apps)
+echo "🔨 Building Docker image for linux/amd64..."
+docker build --platform linux/amd64 -t ${APP_ACR_NAME}.azurecr.io/${IMAGE_NAME}:${TAG} .
 
 # Push to ACR
 echo "📤 Pushing image to ACR..."
