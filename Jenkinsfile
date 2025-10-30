@@ -45,12 +45,11 @@ pipeline {
         
         stage('Setup Python Environment') {
             steps {
-                echo '🐍 Setting up Python virtual environment...'
+                echo '🐍 Setting up Python environment...'
                 sh '''
                     python3 --version
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
+                    # Use --break-system-packages since we're in a container
+                    python3 -m pip install --upgrade pip --break-system-packages
                 '''
             }
         }
@@ -59,8 +58,8 @@ pipeline {
             steps {
                 echo '📦 Installing Python dependencies...'
                 sh '''
-                    . venv/bin/activate
-                    pip install -r requirements.txt
+                    # Install in user space to avoid system-wide issues
+                    pip3 install -r requirements.txt --break-system-packages
                 '''
             }
         }
@@ -69,10 +68,9 @@ pipeline {
             steps {
                 echo '🧪 Running tests...'
                 sh '''
-                    . venv/bin/activate
                     # Add your test commands here
                     # For now, just verify imports work
-                    python -c "from research_and_analyst.api.main import app; print('✅ Imports successful')"
+                    python3 -c "from research_and_analyst.api.main import app; print('✅ Imports successful')"
                 '''
             }
         }
