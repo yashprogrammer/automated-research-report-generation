@@ -45,10 +45,12 @@ pipeline {
         
         stage('Setup Python Environment') {
             steps {
-                echo '🐍 Setting up Python environment...'
+                echo '🐍 Setting up Python virtual environment...'
                 sh '''
                     python3 --version
-                    python3 -m pip install --upgrade pip
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
                 '''
             }
         }
@@ -57,6 +59,7 @@ pipeline {
             steps {
                 echo '📦 Installing Python dependencies...'
                 sh '''
+                    . venv/bin/activate
                     pip install -r requirements.txt
                 '''
             }
@@ -66,9 +69,10 @@ pipeline {
             steps {
                 echo '🧪 Running tests...'
                 sh '''
+                    . venv/bin/activate
                     # Add your test commands here
                     # For now, just verify imports work
-                    python3 -c "from research_and_analyst.api.main import app; print('✅ Imports successful')"
+                    python -c "from research_and_analyst.api.main import app; print('✅ Imports successful')"
                 '''
             }
         }

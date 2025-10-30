@@ -13,6 +13,8 @@ FILE_SHARE="jenkins-data"
 ACR_NAME="reportjenkinsacr"
 CONTAINER_NAME="jenkins-research-report"
 DNS_NAME_LABEL="jenkins-research-$(date +%s | tail -c 6)"
+JENKINS_IMAGE_NAME="custom-jenkins"
+JENKINS_IMAGE_TAG="lts-git-configured"
 
 echo "╔════════════════════════════════════════════════════════╗"
 echo "║  Deploying Jenkins for Research Report Generation     ║"
@@ -52,12 +54,63 @@ az acr create \
   --sku Basic \
   --admin-enabled true
 
-# Deploy Jenkins Container with Python 3.11
+# Login to ACR
+echo "🔐 Logging in to Azure Container Registry..."
+az acr login --name $ACR_NAME
+
+# Build custom Jenkins image with Git and safe.directory configuration
+echo "🔨 Building custom Jenkins Docker image for Linux AMD64..."
+docker build --platform linux/amd64 -f Dockerfile.jenkins -t ${ACR_NAME}.azurecr.io/${JENKINS_IMAGE_NAME}:${JENKINS_IMAGE_TAG} .
+
+# Push Jenkins image to ACR with retry logic
+echo "📤 Pushing Jenkins image to ACR..."
+MAX_RETRIES=3
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if docker push ${ACR_NAME}.azurecr.io/${JENKINS_IMAGE_NAME}:${JENKINS_IMAGE_TAG}; then
+    echo "✅ Image pushed successfully!"
+    break
+  else
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+      echo "⚠️  Push failed. Retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+      sleep 5
+    else
+      echo "❌ Failed to push image after $MAX_RETRIES attempts."
+      echo ""
+      echo "This can happen due to network issues or large image size."
+      echo ""
+      echo "Options to fix:"
+      echo "1. Re-run the script (it will use cached layers and be faster)"
+      echo "2. Check your internet connection"
+      echo "3. Try pushing manually:"
+      echo "   az acr login --name $ACR_NAME"
+      echo "   docker push ${ACR_NAME}.azurecr.io/${JENKINS_IMAGE_NAME}:${JENKINS_IMAGE_TAG}"
+      exit 1
+    fi
+  fi
+done
+
+# Get ACR credentials for container deployment
+echo "🔑 Retrieving ACR credentials..."
+ACR_USERNAME=$(az acr credential show \
+  --name $ACR_NAME \
+  --query username -o tsv)
+
+ACR_PASSWORD=$(az acr credential show \
+  --name $ACR_NAME \
+  --query passwords[0].value -o tsv)
+
+# Deploy Jenkins Container using custom image
 echo "🚀 Deploying Jenkins Container..."
 az container create \
   --resource-group $RESOURCE_GROUP \
   --name $CONTAINER_NAME \
-  --image jenkins/jenkins:lts-jdk17 \
+  --image ${ACR_NAME}.azurecr.io/${JENKINS_IMAGE_NAME}:${JENKINS_IMAGE_TAG} \
+  --registry-login-server ${ACR_NAME}.azurecr.io \
+  --registry-username $ACR_USERNAME \
+  --registry-password $ACR_PASSWORD \
   --os-type Linux \
   --dns-name-label $DNS_NAME_LABEL \
   --ports 8080 \
