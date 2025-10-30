@@ -12,3 +12,7 @@ wheels/
 .env
 logs
 archive
+
+/docs
+CONTRIBUTING.md
+_other_proj.md

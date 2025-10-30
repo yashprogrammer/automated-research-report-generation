@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from datetime import datetime
 from research_and_analyst.api.routes import report_routes
 
 app = FastAPI(title="Autonomous Report Generator UI")
@@ -24,6 +25,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Health check endpoint for container orchestration
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Azure Container Apps and monitoring"""
+    return {
+        "status": "healthy",
+        "service": "research-report-generation",
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0"
+    }
 
 # Register Routes
 app.include_router(report_routes.router)
