@@ -93,10 +93,7 @@ pipeline {
             steps {
                 echo '🔍 Verifying Docker image exists in ACR...'
                 sh '''
-                    # Login to ACR
-                    az acr login --name $ACR_NAME
-                    
-                    # Check if image exists
+                    # Check if image exists (no Docker needed)
                     if az acr repository show --name $ACR_NAME --repository $IMAGE_NAME > /dev/null 2>&1; then
                         echo "✅ Image found in ACR"
                         az acr repository show-tags --name $ACR_NAME --repository $IMAGE_NAME --output table
