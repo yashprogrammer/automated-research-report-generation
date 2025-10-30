@@ -33,11 +33,15 @@ pipeline {
     
     stages {
         stage('Checkout') {
-            steps {
-                echo '📥 Checking out code from Git...'
-                checkout scm
-            }
-        }
+    steps {
+        echo '📥 Checking out code from Git...'
+        // Clean workspace first
+        deleteDir()
+        // Clone the repository
+        git branch: 'main',
+            url: 'https://github.com/yashprogrammer/automated-research-report-generation.git'
+    }
+}
         
         stage('Setup Python Environment') {
             steps {
