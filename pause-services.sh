@@ -46,3 +46,6 @@ echo "💰 Cost reduced to ~\$11/month (storage + ACRs only)"
 echo ""
 echo "To resume services, run: ./resume-services.sh"
 
+
+
+

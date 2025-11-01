@@ -42,3 +42,6 @@ echo "ℹ️  Jenkins infrastructure is still present."
 echo ""
 echo "To completely remove everything, run: ./complete-cleanup.sh"
 
+
+
+

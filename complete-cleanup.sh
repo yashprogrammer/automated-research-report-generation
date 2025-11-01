@@ -63,3 +63,6 @@ echo "  az group show --name research-report-app-rg"
 echo ""
 echo "💰 All charges will stop once deletion is complete."
 
+
+
+
